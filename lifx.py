@@ -24,16 +24,18 @@ Examples:
   lifx list                                    # List all lights
   lifx on --label "Office"                     # Turn on by name
   lifx off --ip 192.168.1.100                  # Turn off by IP
-  lifx color --mac d0:73:xx --hue 240 --saturation 100 --brightness 80 --kelvin 4000
-  lifx brightness --label "Desk" 50            # Set brightness to 50%
+  lifx set --label "Desk" --brightness 50      # Set brightness to 50%
+  lifx set --label "Desk" --hue 120            # Change hue, keep other properties
+  lifx set --mac d0:73:xx --hue 240 --saturation 100 --brightness 80 --kelvin 4000
   lifx rename --label "Old Name" "New Name"    # Rename a light
 
 Compose complex behaviors by chaining calls:
-  lifx on --label "Room1" && lifx color --label "Room1" --hue 120 --saturation 100 --brightness 70 --kelvin 3500
+  lifx on --label "Room1" && lifx set --label "Room1" --hue 120 --saturation 100 --brightness 70
 """
 
 
 # LIFX HSBK color helpers
+
 def hue(degrees: int) -> int:
     """Convert degrees (0-360) to LIFX hue (0-65535)."""
     return int((degrees / 360) * 65535)
@@ -138,16 +140,6 @@ class LifxController:
         color = (h, s, b, k)
         light.set_color(color, duration=duration)
 
-    def set_brightness(self, light, percent: int, duration: int = 0):
-        """Set brightness while maintaining current color."""
-        try:
-            current = light.get_color()
-            h, s, _, k = current
-            new_brightness = brightness(percent)
-            light.set_color((h, s, new_brightness, k), duration=duration)
-        except Exception as e:
-            raise RuntimeError(f"Failed to set brightness: {e}")
-
     def set_label(self, light, new_label: str):
         """Rename a light."""
         if len(new_label) > 32:
@@ -189,6 +181,21 @@ def cmd_list(args):
     return 0
 
 
+def cmd_rename(args):
+    """Rename a light."""
+    controller = LifxController()
+    light = controller.find_light(mac=args.mac, ip=args.ip, label=args.label)
+
+    if not light:
+        print(f"Light not found")
+        return 1
+
+    old_label = light.get_label()
+    controller.set_label(light, args.name)
+    print(f"Light renamed from '{old_label}' to '{args.name}'")
+    return 0
+
+
 def cmd_on(args):
     """Turn on a light."""
     controller = LifxController()
@@ -219,8 +226,8 @@ def cmd_off(args):
     return 0
 
 
-def cmd_color(args):
-    """Set light color using HSBK values."""
+def cmd_set(args):
+    """Set light color/brightness properties."""
     controller = LifxController()
     light = controller.find_light(mac=args.mac, ip=args.ip, label=args.label)
 
@@ -228,45 +235,42 @@ def cmd_color(args):
         print(f"Light not found")
         return 1
 
-    # Convert input values if needed
-    h = hue(args.hue) if args.hue <= 360 else args.hue
-    s = saturation(args.saturation) if args.saturation <= 100 else args.saturation
-    b = brightness(args.brightness) if args.brightness <= 100 else args.brightness
-    k = args.kelvin
-
-    controller.set_color(light, h, s, b, k, duration=args.duration)
-    label = light.get_label() if hasattr(light, 'get_label') else 'Light'
-    print(f"{label} color set to H:{args.hue} S:{args.saturation} B:{args.brightness} K:{k}")
-    return 0
-
-
-def cmd_brightness(args):
-    """Set light brightness (0-100)."""
-    controller = LifxController()
-    light = controller.find_light(mac=args.mac, ip=args.ip, label=args.label)
-
-    if not light:
-        print(f"Light not found")
+    # Must specify at least one color property
+    if not any(x is not None for x in [args.hue, args.saturation, args.brightness, args.kelvin]):
+        print("Error: must specify at least one property to set (--hue, --saturation, --brightness, --kelvin)")
         return 1
 
-    controller.set_brightness(light, args.brightness, duration=args.duration)
-    label = light.get_label() if hasattr(light, 'get_label') else 'Light'
-    print(f"{label} brightness set to {args.brightness}%")
-    return 0
+    light_label = light.get_label() if hasattr(light, 'get_label') else 'Light'
+    changes = []
 
+    try:
+        # Get current color
+        current = light.get_color()
+        h, s, b, k = current
 
-def cmd_rename(args):
-    """Rename a light."""
-    controller = LifxController()
-    light = controller.find_light(mac=args.mac, ip=args.ip, label=args.label)
+        # Override with provided values
+        if args.hue is not None:
+            h = hue(args.hue) if args.hue <= 360 else args.hue
+            changes.append(f"hue={args.hue}")
 
-    if not light:
-        print(f"Light not found")
+        if args.saturation is not None:
+            s = saturation(args.saturation) if args.saturation <= 100 else args.saturation
+            changes.append(f"saturation={args.saturation}")
+
+        if args.brightness is not None:
+            b = brightness(args.brightness) if args.brightness <= 100 else args.brightness
+            changes.append(f"brightness={args.brightness}")
+
+        if args.kelvin is not None:
+            k = args.kelvin
+            changes.append(f"kelvin={args.kelvin}")
+
+        controller.set_color(light, h, s, b, k, duration=args.duration)
+    except Exception as e:
+        print(f"Failed to set color: {e}")
         return 1
 
-    old_label = light.get_label()
-    controller.set_label(light, args.name)
-    print(f"Light renamed from '{old_label}' to '{args.name}'")
+    print(f"{light_label}: {', '.join(changes)}")
     return 0
 
 
@@ -285,6 +289,14 @@ def main():
     list_parser = subparsers.add_parser('list', help='List all lights')
     list_parser.set_defaults(func=cmd_list)
 
+    # Rename command
+    rename_parser = subparsers.add_parser('rename', help='Rename a light')
+    rename_parser.add_argument('--mac', '-m', help='MAC address of light')
+    rename_parser.add_argument('--ip', '-i', help='IP address of light')
+    rename_parser.add_argument('--label', '-l', help='Current label/name of light')
+    rename_parser.add_argument('name', help='New name for the light (max 32 chars)')
+    rename_parser.set_defaults(func=cmd_rename)
+
     # On command
     on_parser = subparsers.add_parser('on', help='Turn on a light')
     on_parser.add_argument('--mac', '-m', help='MAC address of light')
@@ -301,34 +313,17 @@ def main():
     off_parser.add_argument('--duration', '-d', type=int, default=0, help='Transition duration in ms (default: 0)')
     off_parser.set_defaults(func=cmd_off)
 
-    # Color command
-    color_parser = subparsers.add_parser('color', help='Set light color (HSBK)')
-    color_parser.add_argument('--mac', '-m', help='MAC address of light')
-    color_parser.add_argument('--ip', '-i', help='IP address of light')
-    color_parser.add_argument('--label', '-l', help='Label/name of light')
-    color_parser.add_argument('--hue', type=int, required=True, help='Hue (0-360 degrees)')
-    color_parser.add_argument('--saturation', '-s', type=int, required=True, help='Saturation (0-100%%)')
-    color_parser.add_argument('--brightness', '-b', type=int, required=True, help='Brightness (0-100%%)')
-    color_parser.add_argument('--kelvin', '-k', type=int, default=3500, help='Kelvin (2500-9000, default: 3500)')
-    color_parser.add_argument('--duration', '-d', type=int, default=0, help='Transition duration in ms (default: 0)')
-    color_parser.set_defaults(func=cmd_color)
-
-    # Brightness command
-    brightness_parser = subparsers.add_parser('brightness', help='Set light brightness')
-    brightness_parser.add_argument('--mac', '-m', help='MAC address of light')
-    brightness_parser.add_argument('--ip', '-i', help='IP address of light')
-    brightness_parser.add_argument('--label', '-l', help='Label/name of light')
-    brightness_parser.add_argument('brightness', type=int, help='Brightness (0-100%%)')
-    brightness_parser.add_argument('--duration', '-d', type=int, default=0, help='Transition duration in ms (default: 0)')
-    brightness_parser.set_defaults(func=cmd_brightness)
-
-    # Rename command
-    rename_parser = subparsers.add_parser('rename', help='Rename a light')
-    rename_parser.add_argument('--mac', '-m', help='MAC address of light')
-    rename_parser.add_argument('--ip', '-i', help='IP address of light')
-    rename_parser.add_argument('--label', '-l', help='Current label/name of light')
-    rename_parser.add_argument('name', help='New name for the light (max 32 chars)')
-    rename_parser.set_defaults(func=cmd_rename)
+    # Set command
+    set_parser = subparsers.add_parser('set', help='Set light color/brightness (HSBK)')
+    set_parser.add_argument('--mac', '-m', help='MAC address of light')
+    set_parser.add_argument('--ip', '-i', help='IP address of light')
+    set_parser.add_argument('--label', '-l', help='Label/name of light')
+    set_parser.add_argument('--hue', type=int, help='Hue (0-360 degrees)')
+    set_parser.add_argument('--saturation', '-s', type=int, help='Saturation (0-100%%)')
+    set_parser.add_argument('--brightness', '-b', type=int, help='Brightness (0-100%%)')
+    set_parser.add_argument('--kelvin', '-k', type=int, help='Kelvin (2500-9000)')
+    set_parser.add_argument('--duration', '-d', type=int, default=0, help='Transition duration in ms (default: 0)')
+    set_parser.set_defaults(func=cmd_set)
 
     args = parser.parse_args()
 
