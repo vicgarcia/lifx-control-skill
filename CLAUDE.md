@@ -72,13 +72,13 @@ This means users can copy one file and run it without any installation process. 
 
 ## LIFX Protocol Notes
 
-HSBK color model:
-- Hue: 0-360 degrees (color wheel)
-- Saturation: 0-100% (color intensity, 0=white)
-- Brightness: 0-100% (light intensity)
+HSBK color model (all raw values):
+- Hue: 0-65535 (color wheel, where 65535/360 ≈ 182 per degree)
+- Saturation: 0-65535 (color intensity, 0=white, 65535=full color)
+- Brightness: 0-65535 (light intensity)
 - Kelvin: 2500-9000 (color temperature, only visible at low saturation)
 
-Internally, LIFX uses 0-65535 for H/S/B. We convert from human-friendly 0-360/0-100 ranges.
+We use raw LIFX values so you can replicate exactly what the bulb displays.
 
 ## Git Stuff
 

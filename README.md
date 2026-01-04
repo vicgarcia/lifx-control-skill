@@ -38,27 +38,27 @@ lifx rename --mac d0:73:d5:x7:y8:z9 "Bedroom"
 lifx on --label "Office"
 lifx off --label "Bedroom"
 
-# Set colors (HSBK: Hue 0-360, Saturation 0-100, Brightness 0-100, Kelvin 2500-9000)
-lifx color --label "Office" --hue 240 --saturation 100 --brightness 80 --kelvin 4000
-lifx color --mac d0:73:d5:x7:y8:z9 --hue 35 --saturation 60 --brightness 50 --kelvin 2700
+# Set colors and brightness (raw LIFX values: Hue/Sat/Brightness 0-65535, Kelvin 2500-9000)
+lifx set --label "Office" --hue 43690 --saturation 65535 --brightness 52428 --kelvin 4000
+lifx set --mac d0:73:d5:x7:y8:z9 --hue 6371 --saturation 39321 --brightness 32768 --kelvin 2700
 
-# Adjust brightness
-lifx brightness --label "Office" 100
-lifx brightness --mac d0:73:d5:x7:y8:z9 30
+# Adjust just brightness (other properties stay the same)
+lifx set --label "Office" --brightness 65535
+lifx set --mac d0:73:d5:x7:y8:z9 --brightness 19660
 ```
 
-## Common Colors
+## Common Colors (Hue values)
 
 Red: `--hue 0`
-Orange: `--hue 35`
-Yellow: `--hue 60`
-Green: `--hue 120`
-Cyan: `--hue 180`
-Blue: `--hue 240`
-Purple: `--hue 280`
-Pink: `--hue 300`
+Orange: `--hue 6371` (~35°)
+Yellow: `--hue 10923` (~60°)
+Green: `--hue 21845` (~120°)
+Cyan: `--hue 32768` (~180°)
+Blue: `--hue 43690` (~240°)
+Purple: `--hue 50972` (~280°)
+Pink: `--hue 54613` (~300°)
 
-Saturation at 100 gives you full color, lower values wash it out toward white. Kelvin only matters when saturation is low.
+Saturation at 65535 gives you full color, lower values wash it out toward white. Kelvin only matters when saturation is low.
 
 ## Development
 

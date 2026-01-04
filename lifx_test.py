@@ -15,25 +15,6 @@ from unittest.mock import Mock, patch
 import lifx
 
 
-class TestColorHelpers:
-    """Test HSBK color conversion helpers."""
-
-    def test_hue_conversion(self):
-        assert lifx.hue(0) == 0
-        assert lifx.hue(180) == 32767
-        assert lifx.hue(360) == 65535
-
-    def test_saturation_conversion(self):
-        assert lifx.saturation(0) == 0
-        assert lifx.saturation(50) == 32767
-        assert lifx.saturation(100) == 65535
-
-    def test_brightness_conversion(self):
-        assert lifx.brightness(0) == 0
-        assert lifx.brightness(50) == 32767
-        assert lifx.brightness(100) == 65535
-
-
 class TestLifxController:
     """Test LifxController class."""
 
@@ -192,20 +173,6 @@ class TestLifxController:
         expected_color = (30000, 40000, 50000, 3500)
         mock_light.set_color.assert_called_once_with(expected_color, duration=1000)
 
-    @patch('lifx.LifxLAN')
-    def test_set_brightness(self, mock_lifxlan):
-        mock_light = Mock()
-        mock_light.get_color.return_value = (30000, 40000, 50000, 3500)
-        mock_lan_instance = Mock()
-        mock_lifxlan.return_value = mock_lan_instance
-
-        controller = lifx.LifxController()
-        controller.set_brightness(mock_light, 80, duration=500)
-
-        # Should preserve H, S, K but change B to 80%
-        expected_brightness = lifx.brightness(80)
-        expected_color = (30000, 40000, expected_brightness, 3500)
-        mock_light.set_color.assert_called_once_with(expected_color, duration=500)
 
     @patch('lifx.LifxLAN')
     def test_set_label(self, mock_lifxlan):
@@ -338,9 +305,10 @@ class TestCommandFunctions:
         assert "turned off" in captured.out
 
     @patch('lifx.LifxController')
-    def test_cmd_color_success(self, mock_controller_class, capsys):
+    def test_cmd_set_success(self, mock_controller_class, capsys):
         mock_light = Mock()
         mock_light.get_label.return_value = 'Office'
+        mock_light.get_color.return_value = (30000, 40000, 50000, 3500)
 
         mock_controller = Mock()
         mock_controller.find_light.return_value = mock_light
@@ -350,29 +318,26 @@ class TestCommandFunctions:
         args.mac = None
         args.ip = None
         args.label = 'Office'
-        args.hue = 240
-        args.saturation = 100
-        args.brightness = 80
+        args.hue = 43690
+        args.saturation = 65535
+        args.brightness = 52428
         args.kelvin = 4000
         args.duration = 1000
 
-        result = lifx.cmd_color(args)
+        result = lifx.cmd_set(args)
 
         assert result == 0
-        # Verify conversion from degrees/percent to LIFX values
-        expected_h = lifx.hue(240)
-        expected_s = lifx.saturation(100)
-        expected_b = lifx.brightness(80)
         mock_controller.set_color.assert_called_once_with(
-            mock_light, expected_h, expected_s, expected_b, 4000, duration=1000
+            mock_light, 43690, 65535, 52428, 4000, duration=1000
         )
         captured = capsys.readouterr()
-        assert "color set" in captured.out
+        assert "Office" in captured.out
 
     @patch('lifx.LifxController')
-    def test_cmd_brightness_success(self, mock_controller_class, capsys):
+    def test_cmd_set_partial_values(self, mock_controller_class, capsys):
         mock_light = Mock()
         mock_light.get_label.return_value = 'Office'
+        mock_light.get_color.return_value = (30000, 40000, 50000, 3500)
 
         mock_controller = Mock()
         mock_controller.find_light.return_value = mock_light
@@ -382,15 +347,21 @@ class TestCommandFunctions:
         args.mac = None
         args.ip = None
         args.label = 'Office'
-        args.brightness = 75
+        args.hue = None
+        args.saturation = None
+        args.brightness = 32768
+        args.kelvin = None
         args.duration = 500
 
-        result = lifx.cmd_brightness(args)
+        result = lifx.cmd_set(args)
 
         assert result == 0
-        mock_controller.set_brightness.assert_called_once_with(mock_light, 75, duration=500)
+        # Should preserve existing H, S, K and only change B
+        mock_controller.set_color.assert_called_once_with(
+            mock_light, 30000, 40000, 32768, 3500, duration=500
+        )
         captured = capsys.readouterr()
-        assert "brightness set to 75%" in captured.out
+        assert "brightness=32768" in captured.out
 
     @patch('lifx.LifxController')
     def test_cmd_rename_success(self, mock_controller_class, capsys):

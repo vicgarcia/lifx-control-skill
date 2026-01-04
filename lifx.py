@@ -21,34 +21,17 @@ from lifxlan import LifxLAN
 
 CLI_EPILOG = """
 Examples:
-  lifx list                                    # List all lights
-  lifx on --label "Office"                     # Turn on by name
-  lifx off --ip 192.168.1.100                  # Turn off by IP
-  lifx set --label "Desk" --brightness 50      # Set brightness to 50%
-  lifx set --label "Desk" --hue 120            # Change hue, keep other properties
-  lifx set --mac d0:73:xx --hue 240 --saturation 100 --brightness 80 --kelvin 4000
-  lifx rename --label "Old Name" "New Name"    # Rename a light
+  lifx list                                         # List all lights
+  lifx on --label "Office"                          # Turn on by name
+  lifx off --ip 192.168.1.100                       # Turn off by IP
+  lifx set --label "Desk" --brightness 32768        # Set brightness to 50% (32768/65535)
+  lifx set --label "Desk" --hue 21845               # Change hue, keep other properties
+  lifx set --mac d0:73:xx --hue 43690 --saturation 65535 --brightness 52428 --kelvin 4000
+  lifx rename --label "Old Name" "New Name"         # Rename a light
 
 Compose complex behaviors by chaining calls:
-  lifx on --label "Room1" && lifx set --label "Room1" --hue 120 --saturation 100 --brightness 70
+  lifx on --label "Room1" && lifx set --label "Room1" --hue 21845 --saturation 65535 --brightness 45875
 """
-
-
-# LIFX HSBK color helpers
-
-def hue(degrees: int) -> int:
-    """Convert degrees (0-360) to LIFX hue (0-65535)."""
-    return int((degrees / 360) * 65535)
-
-
-def saturation(percent: int) -> int:
-    """Convert percentage (0-100) to LIFX saturation (0-65535)."""
-    return int((percent / 100) * 65535)
-
-
-def brightness(percent: int) -> int:
-    """Convert percentage (0-100) to LIFX brightness (0-65535)."""
-    return int((percent / 100) * 65535)
 
 
 class LifxController:
@@ -248,17 +231,17 @@ def cmd_set(args):
         current = light.get_color()
         h, s, b, k = current
 
-        # Override with provided values
+        # Override with provided values (raw LIFX values 0-65535)
         if args.hue is not None:
-            h = hue(args.hue) if args.hue <= 360 else args.hue
+            h = args.hue
             changes.append(f"hue={args.hue}")
 
         if args.saturation is not None:
-            s = saturation(args.saturation) if args.saturation <= 100 else args.saturation
+            s = args.saturation
             changes.append(f"saturation={args.saturation}")
 
         if args.brightness is not None:
-            b = brightness(args.brightness) if args.brightness <= 100 else args.brightness
+            b = args.brightness
             changes.append(f"brightness={args.brightness}")
 
         if args.kelvin is not None:
@@ -270,7 +253,7 @@ def cmd_set(args):
         print(f"Failed to set color: {e}")
         return 1
 
-    print(f"{light_label}: {', '.join(changes)}")
+    # print(f"{light_label}: {', '.join(changes)}")
     return 0
 
 
@@ -318,9 +301,9 @@ def main():
     set_parser.add_argument('--mac', '-m', help='MAC address of light')
     set_parser.add_argument('--ip', '-i', help='IP address of light')
     set_parser.add_argument('--label', '-l', help='Label/name of light')
-    set_parser.add_argument('--hue', type=int, help='Hue (0-360 degrees)')
-    set_parser.add_argument('--saturation', '-s', type=int, help='Saturation (0-100%%)')
-    set_parser.add_argument('--brightness', '-b', type=int, help='Brightness (0-100%%)')
+    set_parser.add_argument('--hue', type=int, help='Hue (0-65535)')
+    set_parser.add_argument('--saturation', '-s', type=int, help='Saturation (0-65535)')
+    set_parser.add_argument('--brightness', '-b', type=int, help='Brightness (0-65535)')
     set_parser.add_argument('--kelvin', '-k', type=int, help='Kelvin (2500-9000)')
     set_parser.add_argument('--duration', '-d', type=int, default=0, help='Transition duration in ms (default: 0)')
     set_parser.set_defaults(func=cmd_set)
