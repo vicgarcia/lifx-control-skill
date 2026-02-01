@@ -4,11 +4,17 @@ Unit tests for the LIFX single-file controller.
 Setup:
   uv venv
   source .venv/bin/activate  # or `.venv/bin/activate.fish` on fish shell
-  uv pip install -e . pytest lifxlan
+  uv pip install pytest lifxlan
 
 Run tests:
-  uv run pytest lifx_test.py -v
+  pytest lifx_test.py -v
 """
+
+import sys
+from pathlib import Path
+
+# Add scripts directory to path for importing lifx module
+sys.path.insert(0, str(Path(__file__).parent / "scripts"))
 
 import pytest
 from unittest.mock import Mock, patch

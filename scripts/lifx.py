@@ -253,7 +253,7 @@ def cmd_set(args):
         print(f"Failed to set color: {e}")
         return 1
 
-    # print(f"{light_label}: {', '.join(changes)}")
+    print(f"{light_label}: {', '.join(changes)}")
     return 0
 
 

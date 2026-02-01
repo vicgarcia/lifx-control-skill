@@ -23,16 +23,10 @@ MANIFEST
 
 # Virtual environments
 venv/
-ENV/
-env/
 .venv/
 
 # IDE
 .vscode/
-.idea/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
@@ -49,3 +43,6 @@ htmlcov/
 
 # uv
 .python-version
+
+# Claude Code
+.claude/
