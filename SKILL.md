@@ -17,10 +17,6 @@ This skill enables control of LIFX smart bulbs on the local network using the `s
 - LIFX bulbs must be on the same local network
 - No cloud accounts or API keys needed - uses direct LAN protocol
 
-## Behavior
-
-**Execute commands directly**—don't explain CLI usage or give instructions. When the user asks to control lights, run the commands and report the results. Only explain CLI usage if the user explicitly asks how the tool works.
-
 ## How to Use
 
 The CLI tool is located at `scripts/lifx.py` in this skill's directory. Run commands using:
