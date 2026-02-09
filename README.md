@@ -14,68 +14,70 @@ The agent controls your lights directly via LAN protocol—no cloud accounts, no
 
 ## Requirements
 
-- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- [lifx CLI tool](https://github.com/vicgarcia/lifx.py) installed and available in PATH
 - LIFX bulbs on the same local network
 
 ## Installation
 
-Clone to your Claude Code skills directory:
+### 1. Install lifx CLI tool
 
-```bash
-git clone https://github.com/vicgarcia/lifx-lighting-control.git ~/.claude/skills/lifx-lighting-control
-```
-
-## How it works
-
-The skill uses a single Python script (`scripts/lifx.py`) that communicates directly with LIFX bulbs over your local network using the [lifxlan](https://github.com/mclarkk/lifxlan) library. The agent reads `SKILL.md` to understand available commands and executes them via bash.
-
-## CLI Tool
-
-The `scripts/lifx.py` script works great on its own if you want to control lights from the command line.
-
-### Install
+First, install the `lifx` command-line tool:
 
 ```bash
 # Install uv if you don't have it
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Copy to your PATH and make executable
-cp scripts/lifx.py ~/.local/bin/lifx
+# Download and install lifx
+mkdir -p ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/vicgarcia/lifx.py/main/lifx -o ~/.local/bin/lifx
 chmod +x ~/.local/bin/lifx
 
-# Make sure ~/.local/bin is in your PATH
-export PATH="$HOME/.local/bin:$PATH"
+# Ensure ~/.local/bin is in your PATH
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify installation
+lifx --help
 ```
 
-### Usage
+For detailed installation instructions, see: https://github.com/vicgarcia/lifx.py
+
+### 2. Install the skill
+
+Clone this skill to your Claude Code skills directory:
 
 ```bash
-# Discover lights
-lifx list
-
-# Power control
-lifx on --label "Office"
-lifx off --label "Bedroom"
-
-# Set colors (raw LIFX values: H/S/B 0-65535, Kelvin 2500-9000)
-lifx set --label "Office" --hue 43690 --saturation 65535 --brightness 52428
-lifx set --label "Bedroom" --brightness 16384 --saturation 0 --kelvin 2700
-
-# Rename lights
-lifx rename --mac d0:73:d5:a1:b2:c3 "Office"
+git clone https://github.com/vicgarcia/lifx-lighting-control.git ~/.claude/skills/lifx-lighting-control
 ```
 
-### Common Colors
+Or for pi-coding-agent:
 
-| Color | Hue |
-|-------|-----|
-| Red | 0 |
-| Orange | 6371 |
-| Yellow | 10923 |
-| Green | 21845 |
-| Cyan | 32768 |
-| Blue | 43690 |
-| Purple | 50972 |
-| Pink | 54613 |
+```bash
+git clone https://github.com/vicgarcia/lifx-lighting-control.git ~/.pi/agent/skills/lifx-lighting-control
+```
 
-Saturation at 65535 = full color, 0 = white. Kelvin only matters at low saturation.
+## How it works
+
+The skill provides instructions to the agent on how to use the `lifx` command-line tool. The agent reads [SKILL.md](SKILL.md) to understand available commands and executes them via bash.
+
+The `lifx` tool communicates directly with LIFX bulbs over your local network using the [lifxlan](https://github.com/mclarkk/lifxlan) library.
+
+## Usage Examples
+
+Once installed, your agent can execute commands like:
+
+```bash
+# Discover all lights
+lifx list
+
+# Turn on by name
+lifx on --label "Office"
+
+# Set color and brightness
+lifx set --label "Desk" --hue 43690 --saturation 65535 --brightness 32768
+
+# Turn off
+lifx off --label "Bedroom"
+```
+
+See [SKILL.md](SKILL.md) for complete documentation on available commands and the HSBK color model.

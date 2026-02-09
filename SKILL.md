@@ -1,31 +1,26 @@
 ---
 name: lifx-lighting-control
 description: Control LIFX smart bulbs on the local network. Use when the user wants to control lights, change colors, adjust brightness, or manage smart lighting. Supports discovery, power control, and HSBK color settings via direct LAN protocol.
-compatibility: Requires uv (Python package manager) and network access to LIFX bulbs on local LAN.
+compatibility: Requires 'lifx' CLI tool installed in PATH (https://github.com/vicgarcia/lifx.py)
 metadata:
   author: vic garcia
-  version: "1.0"
+  version: "2.0"
 ---
 
 # LIFX Smart Bulb Control
 
-This skill enables control of LIFX smart bulbs on the local network using the `scripts/lifx.py` CLI tool.
+This skill enables control of LIFX smart bulbs on the local network using the `lifx` command-line tool.
 
 ## Prerequisites
 
-- **uv** must be installed (Python package manager)
+- **lifx CLI tool** must be installed and available in PATH
+- Install from: https://github.com/vicgarcia/lifx.py
 - LIFX bulbs must be on the same local network
 - No cloud accounts or API keys needed - uses direct LAN protocol
 
 ## How to Use
 
-The CLI tool is located at `scripts/lifx.py` in this skill's directory. Run commands using:
-
-```bash
-uv run --script scripts/lifx.py <command> [options]
-```
-
-First run takes ~3 seconds to set up dependencies. Subsequent runs are instant.
+All commands use the `lifx` tool directly. The tool must be installed and available in your PATH.
 
 ## Commands
 
@@ -34,7 +29,7 @@ First run takes ~3 seconds to set up dependencies. Subsequent runs are instant.
 List all LIFX bulbs on the network:
 
 ```bash
-uv run --script scripts/lifx.py list
+lifx list
 ```
 
 Output shows: NAME, IP, MAC, MODEL, POWER, COLOR (HSBK values)
@@ -43,17 +38,17 @@ Output shows: NAME, IP, MAC, MODEL, POWER, COLOR (HSBK values)
 
 ```bash
 # By label (name)
-uv run --script scripts/lifx.py on --label "Office"
-uv run --script scripts/lifx.py off --label "Bedroom"
+lifx on --label "Office"
+lifx off --label "Bedroom"
 
 # By IP address
-uv run --script scripts/lifx.py on --ip 192.168.1.100
+lifx on --ip 192.168.1.100
 
 # By MAC address
-uv run --script scripts/lifx.py off --mac d0:73:d5:xx:xx:xx
+lifx off --mac d0:73:d5:xx:xx:xx
 
 # With transition duration (milliseconds)
-uv run --script scripts/lifx.py on --label "Office" --duration 1000
+lifx on --label "Office" --duration 1000
 ```
 
 ### Set color and brightness
@@ -62,22 +57,22 @@ Use `set` command with HSBK values. You can set any combination of properties:
 
 ```bash
 # Set brightness only (50%)
-uv run --script scripts/lifx.py set --label "Desk" --brightness 32768
+lifx set --label "Desk" --brightness 32768
 
 # Set hue only (keeps other properties)
-uv run --script scripts/lifx.py set --label "Desk" --hue 21845
+lifx set --label "Desk" --hue 21845
 
 # Set full color
-uv run --script scripts/lifx.py set --label "Desk" --hue 43690 --saturation 65535 --brightness 52428 --kelvin 4000
+lifx set --label "Desk" --hue 43690 --saturation 65535 --brightness 52428 --kelvin 4000
 
 # With transition
-uv run --script scripts/lifx.py set --label "Office" --brightness 65535 --duration 2000
+lifx set --label "Office" --brightness 65535 --duration 2000
 ```
 
 ### Rename a light
 
 ```bash
-uv run --script scripts/lifx.py rename --label "Old Name" "New Name"
+lifx rename --label "Old Name" "New Name"
 ```
 
 ## HSBK Color Model
@@ -122,7 +117,7 @@ LIFX uses raw 16-bit values (0-65535) for color:
 Always run `list` first to discover available lights and their identifiers:
 
 ```bash
-uv run --script scripts/lifx.py list
+lifx list
 ```
 
 You can then target lights by:
@@ -136,17 +131,11 @@ Chain multiple commands for complex operations:
 
 ```bash
 # Turn on and set to warm dim
-uv run --script scripts/lifx.py on --label "Bedroom" && \
-uv run --script scripts/lifx.py set --label "Bedroom" --brightness 6554 --saturation 0 --kelvin 2700
+lifx on --label "Bedroom" && \
+lifx set --label "Bedroom" --brightness 6554 --saturation 0 --kelvin 2700
 
 # Set multiple lights
 for light in "Office" "Desk" "Hallway"; do
-  uv run --script scripts/lifx.py set --label "$light" --brightness 32768
+  lifx set --label "$light" --brightness 32768
 done
 ```
-
-## Troubleshooting
-
-- **"No LIFX lights found"**: Ensure bulbs are powered on and connected to the same network
-- **"Light not found"**: Run `list` to verify the light's current label/IP/MAC
-- **Slow discovery**: Use `-n` flag if you know the number of lights: `scripts/lifx.py -n 3 list`
