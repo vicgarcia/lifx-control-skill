@@ -1,5 +1,5 @@
 ---
-name: lifx-lighting-control
+name: lifx-control-skill
 description: Control LIFX smart bulbs on the local network. Use when the user wants to control lights, change colors, adjust brightness, or manage smart lighting. Supports discovery, power control, and HSBK color settings via direct LAN protocol.
 compatibility: Requires 'lifx' CLI tool installed in PATH (https://github.com/vicgarcia/lifx.py)
 metadata:

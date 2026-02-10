@@ -1,4 +1,4 @@
-# lifx-lighting-control
+# lifx-control-skill
 
 A skill that gives AI coding agents the ability to control LIFX smart bulbs over your local network.
 
@@ -47,13 +47,13 @@ For detailed installation instructions, see: https://github.com/vicgarcia/lifx.p
 Clone this skill to your Claude Code skills directory:
 
 ```bash
-git clone https://github.com/vicgarcia/lifx-lighting-control.git ~/.claude/skills/lifx-lighting-control
+git clone https://github.com/vicgarcia/lifx-control-skill.git ~/.claude/skills/lifx-control-skill
 ```
 
 Or for pi-coding-agent:
 
 ```bash
-git clone https://github.com/vicgarcia/lifx-lighting-control.git ~/.pi/agent/skills/lifx-lighting-control
+git clone https://github.com/vicgarcia/lifx-control-skill.git ~/.pi/agent/skills/lifx-control-skill
 ```
 
 ## How it works
