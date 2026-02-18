@@ -9,7 +9,7 @@ metadata:
 
 # LIFX Smart Bulb Control
 
-Control LIFX bulbs on the local network using the `lifx` CLI tool.
+Control LIFX bulbs on the local network using the `lifx` CLI tool. Run `lifx --help` for full usage details.
 
 ## Commands
 
@@ -21,22 +21,19 @@ lifx list
 
 ### Power
 ```bash
-lifx on --label "Name"
+lifx on --label "Name"           # by label (case-insensitive)
+lifx on --ip 192.168.1.100       # by IP
+lifx on --mac d0:73:d5:xx:xx:xx  # by MAC
 lifx off --label "Name"
-lifx on --label "Name" --duration 1000   # with transition (ms)
+lifx on --label "Name" --duration 1000  # with transition (ms)
 ```
 
 ### Set Color/Brightness
 ```bash
 lifx set --label "Name" --brightness 32768
-lifx set --label "Name" --hue 43690 --saturation 65535 --brightness 52428 --kelvin 4000
+lifx set --ip 192.168.1.100 --hue 43690 --saturation 65535 --brightness 52428 --kelvin 4000
 lifx set --label "Name" --brightness 65535 --duration 2000
 ```
-
-Target lights by:
-- `--label "Name"` — display name (case-insensitive, from `lifx list`)
-- `--ip 192.168.x.x` — IP address
-- `--mac xx:xx:xx:xx:xx:xx` — MAC address
 
 ## HSBK Color Model
 
